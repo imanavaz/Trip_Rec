@@ -1,3 +1,5 @@
+//Code credit to Andrew Simmons asimmons@swin.edu.au
+
 // dependencies: d3, leaflet, jquery
 
 function hubChart() {

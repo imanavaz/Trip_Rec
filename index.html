@@ -2,60 +2,142 @@
 <meta charset="utf-8">
 
 <style>
-html, body {
-    height: 100%;
-    margin: 0;
-    padding: 0;
-}
-#chart {
-    height: 100%;
-}
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+
+    #chart {
+        height: 100%;
+    }
+
+    #control-panel {
+        height: 100%;
+        width: 18%;
+        float: left;
+        padding-left: 15px;
+        margin-top: 10px;
+        background-color: #fff;
+        text-align: left;
+        font-family: 'Roboto', 'sans-serif';
+    }
 </style>
 <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
 <script src="https://code.jquery.com/jquery-1.11.2.min.js"></script>
 <script src="Scripts/hub-chart.js"></script>
+
 <body>
 
-<div id="chart"></div>
 
-<script>
-// conversion factors
-var timeScale = 0.1; // time (s)     -> width  (px)
-var flowScale = 50.0; // flow (veh/s) -> height (px)
-var badColor = 'red';
-var goodColor = 'green';
+    <div id="control-panel">
+        <br />
+        <br/>
 
-// tiles
-var mapboxId = 'anjsimmo.b5fcdf28';
-var mapboxAccessToken = 'pk.eyJ1IjoiYW5qc2ltbW8iLCJhIjoiLTQ4S0gyRSJ9.G_kMuyMcQ4mY6J9Ru1uESQ';
-var tiles = "http://{s}.tiles.mapbox.com/v4/" + mapboxId + "/{z}/{x}/{y}.png?access_token=" + mapboxAccessToken;
+        <b>Trajecctories:</b>
+        <select id="trajectory-list">
+            <option selected disabled>Choose ...</option>
+        </select>
 
-// setup chart
-var chart = hubChart()
-    .tileLayer(tiles)
-    .attribution('Traffic data &copy; <a href="https://www.vicroads.vic.gov.au/">VicRoads</a>, Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, Imagery &copy; <a href="http://mapbox.com">Mapbox</a>')
-    .mapCenter([-37.8198,145.0414]) // Swinburne University
-    .mapZoom(16)
-    .hubRadius(function(d) {return d.ct * timeScale; })
-    .armWidth(function(d) {return d.pt * timeScale; })
-    .armLength1(function(d) {return d.flow * flowScale; })
-    .armLength2(function(d) {return d.maxflow * flowScale; })
-    .armColor1(function(d) {return d.ds >= 100.0 ? badColor : goodColor; })
-    .hubColor('dimgray');
+        <script type="text/javascript">
+            //Data works
+            var trajectoryFile = 'Data/Melb_recommendations.csv';
+            var dsv = d3.dsv(";", "text/plain");
+            var trajList = document.getElementById('trajectory-list');
+            dsv(trajectoryFile, function(data) {
+                data.forEach(function(d) {
+                    var opt = document.createElement('option');
+                    opt.innerHTML = d.trajID;
+                    opt.value = d.trajID;
+                    trajList.appendChild(opt);
+                });
+            });
+        </script>
 
-// data
-var date = '2014-06-02';
-var time = '08-00-00';
-//var dataUrl = 'data/network_' + date + '_' + time + '.json';
-var dataUrl = 'Data/network_2014-06-02_08-00-00.json';
+        <br />
+        <br />
 
-// draw chart
-d3.json(dataUrl, function(error, data) {
-    d3.select('#chart')
-        .datum(data)
-        .call(chart);
-});
+        <b>Algorithm : </b>
+        <select id="alg-list">
+            <option value="1">Real</option>
+            <option value="2">POI Popularity</option>
+            <option value="3">POI Rank</option>
+            <option value="4">Markov</option>
+            <option value="5">Markov Path</option>
+            <option value="6">Rank + Markov</option>
+            <option value="7">Rank + MarkovPath</option>
+            <option value="8">StructuredSVM</option>
+            <option value="9">PersTour</option>
+            <option value="10">Pers Tour - L</option>
 
-</script>
+        </select>
+
+        <br />
+        <br />
+
+        <b>Travel mode: </b>
+        <select id="mode">
+            <option value="DRIVING">Driving</option>
+            <option value="WALKING">Walking</option>
+            <option value="BICYCLING">Bicycling</option>
+            <option value="TRANSIT">Transit</option>
+        </select>
+
+        <br/>
+        <br />
+
+    </div>
+
+    <div id="chart"></div>
+
+    <script>
+        // conversion factors
+        var timeScale = 0.1; // time (s)     -> width  (px)
+        var flowScale = 50.0; // flow (veh/s) -> height (px)
+        var badColor = 'red';
+        var goodColor = 'green';
+
+        // tiles
+        var mapboxId = 'anjsimmo.b5fcdf28';
+        var mapboxAccessToken = 'pk.eyJ1IjoiYW5qc2ltbW8iLCJhIjoiLTQ4S0gyRSJ9.G_kMuyMcQ4mY6J9Ru1uESQ';
+        var tiles = "http://{s}.tiles.mapbox.com/v4/" + mapboxId + "/{z}/{x}/{y}.png?access_token=" + mapboxAccessToken;
+
+        // setup chart
+        var chart = hubChart()
+            .tileLayer(tiles)
+            .attribution('Traffic data &copy; <a href="https://www.vicroads.vic.gov.au/">VicRoads</a>, Map data &copy; <a href="http://openstreetmap.org">OpenStreetMap</a> contributors, Imagery &copy; <a href="http://mapbox.com">Mapbox</a>')
+            .mapCenter([-37.8198, 145.0414]) // Swinburne University
+            .mapZoom(16)
+            .hubRadius(function(d) {
+                return d.ct * timeScale;
+            })
+            .armWidth(function(d) {
+                return d.pt * timeScale;
+            })
+            .armLength1(function(d) {
+                return d.flow * flowScale;
+            })
+            .armLength2(function(d) {
+                return d.maxflow * flowScale;
+            })
+            .armColor1(function(d) {
+                return d.ds >= 100.0 ? badColor : goodColor;
+            })
+            .hubColor('dimgray');
+
+        // data
+        var date = '2014-06-02';
+        var time = '08-00-00';
+        //var dataUrl = 'data/network_' + date + '_' + time + '.json';
+        var dataUrl = 'Data/network_2014-06-02_08-00-00.json';
+
+        // draw chart
+        d3.json(dataUrl, function(error, data) {
+            d3.select('#chart')
+                .datum(data)
+                .call(chart);
+        });
+    </script>
